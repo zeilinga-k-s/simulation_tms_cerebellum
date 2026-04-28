@@ -1,32 +1,29 @@
 import os
 import argparse
-import tempfile
 import matplotlib.pyplot as plt
-import nibabel as nb
 import SUITPy.flatmap as flatmap
 
 # =============================================================================
 # VISUALISATION CONFIGURATION
-# Adjust these parameters to modify the rendering thresholds and color mapping.
 # =============================================================================
-# Set to 5 V/m to isolate deep cortical penetration and drop background noise
+# Set a 5 V/m threshold to isolate relevant cortical induction from background noise.
 PLOT_THRESHOLD = 5       
 
-# Capped at 80 V/m. While peak field may exceed 150 V/m superficially, 
-# capping the upper limit prevents cerebellar gradients from being washed out.
+# Cap the color scale at 80 V/m so deeper cerebellar gradients remain visible 
+# against much higher superficial maxima.
 COLOUR_MAXIMUM = 80           
 COLOUR_MAP = "magma"
 FIGURE_SIZE = (10, 8)
 
-# Projection spatial statistic. 'nanmean' provides a mathematically stable 
-# average of transcortical induction, circumventing artifacts seen with 'nanmax'.
+# Use nanmean projection to average voxel values across cortical depth. 
+# This avoids localization artifacts common with maximum-value projections.
 PROJECTION_METHOD = "nanmean"
 # =============================================================================
 
 def generate_cerebellar_flatmap(arguments):
     """
-    Extracts the normalized FEM volumetric data, applies stimulator scaling, 
-    and generates a 2D representation using the SUIT cerebellar atlas.
+    Extracts the FEM volumetric data, projects it to a 2D surface, and 
+    scales the magnitude to reflect experimental stimulator intensities.
     """
     electric_field_file = os.path.join(
         os.path.abspath(arguments.project_directory), 
@@ -37,24 +34,19 @@ def generate_cerebellar_flatmap(arguments):
         "simulation_output.nii.gz"
     )
     
-    image_data = nb.load(electric_field_file)
-    
-    # Scale normalized baseline (1 A/us) to actual stimulator output
-    scaled_data_array = image_data.get_fdata() * arguments.scaling_factor
+    # Map the unscaled 3D volume directly to the 2D surface. This avoids loading 
+    # and transforming the full 3D array in memory.
+    raw_surface_data = flatmap.vol_to_surf(
+        electric_field_file,
+        space="MNI",      
+        stats=PROJECTION_METHOD,
+        ignore_zeros=True,
+    )
 
-    # Utilize OS-level temporary files to prevent read/write collisions 
-    # during potential future parallelization across multiple subjects.
-    with tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=True) as temp_file:
-        scaled_file_name = temp_file.name
-        scaled_image_object = nb.Nifti1Image(scaled_data_array, image_data.affine, image_data.header)
-        nb.save(scaled_image_object, scaled_file_name)
-
-        surface_data = flatmap.vol_to_surf(
-            scaled_file_name,
-            space="MNI",      
-            stats=PROJECTION_METHOD,
-            ignore_zeros=True,
-        )
+    # Scale the projected 1D array instead of the 3D volume. Because nanmean 
+    # is a linear operation, this produces the exact same mathematical result 
+    # with far less computation.
+    surface_data = raw_surface_data * arguments.scaling_factor
 
     plt.figure(figsize=FIGURE_SIZE)
     
@@ -70,11 +62,10 @@ def generate_cerebellar_flatmap(arguments):
 
     plt.title(f"Cerebellar |E| (V/m) - Scaled to {arguments.scaling_factor} A/µs", pad=20)
     
-    # Isolate main axis to remove boundary formatting
+    # Remove boundary lines and axes from the plot
     main_brain_axis = plt.gcf().axes[0]
     main_brain_axis.axis('off')
 
-    # Format colorbar label
     colourbar_axis = plt.gcf().axes[-1]
     colourbar_axis.set_ylabel("Electric Field (V/m)", rotation=270, labelpad=20, fontsize=12)
 

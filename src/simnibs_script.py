@@ -8,10 +8,6 @@ from simnibs import sim_struct, run_simnibs
 def run_physics_simulation(arguments):
     """
     Initializes and executes the SimNIBS Finite Element Method (FEM) solver.
-    
-    Parameters are mapped to the subject's local coordinate space. 
-    Surface mapping (map_to_surf) is disabled to optimize runtime, 
-    as downstream SUITPy processing relies strictly on the volumetric output.
     """
     session = sim_struct.SESSION()
     session.subid = arguments.subject_id
@@ -30,9 +26,11 @@ def run_physics_simulation(arguments):
     pos_obj.pos_ydir = [arguments.direction_x, arguments.direction_y, arguments.direction_z]      
     tms_coil_list.pos.append(pos_obj)
 
-    # Physics module configurations
     session.open_in_gmsh = True   
     session.map_to_vol = True     
+    
+    # Disable surface mapping to save computation time. The downstream SUITPy 
+    # mapping relies entirely on the volumetric NIfTI output.
     session.map_to_surf = False   
     session.fields = 'e'          
 
@@ -41,8 +39,9 @@ def run_physics_simulation(arguments):
 
 def standardise_output_names(output_directory):
     """
-    Isolates the magnE NIfTI volume from the SimNIBS output array and 
-    standardizes the nomenclature for downstream processing.
+    Renames the output NIfTI file to a standard name. This ensures the 
+    visualization script functions independently of SimNIBS's variable 
+    naming conventions.
     """
     volume_directory = os.path.join(output_directory, "subject_volumes")
     search_pattern = os.path.join(volume_directory, "*magnE.nii.gz")
@@ -53,6 +52,8 @@ def standardise_output_names(output_directory):
         standard_file = os.path.join(volume_directory, "simulation_output.nii.gz")
         shutil.move(original_file, standard_file)
     else:
+        # Halt execution and return an error code to the shell if the NIfTI 
+        # file is missing. This prevents the downstream script from crashing.
         print("[ERROR] SimNIBS failed to generate a valid magnE NIfTI volume.", file=sys.stderr)
         sys.exit(1)
 
