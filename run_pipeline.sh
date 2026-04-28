@@ -1,37 +1,29 @@
 #!/bin/bash
 set -euo pipefail
 
-# =============================================================================
-# TMS Simulation & Cerebellar Mapping Orchestrator
-# 
-# Usage:
-#   bash run_pipeline.sh [SUBJECT_ID] [POS_X] [POS_Y] [POS_Z]
-# 
-# Example:
-#   bash run_pipeline.sh "patient_01" 30 -115.71 -40.03
-# =============================================================================
-
 # Load environment configuration
 . ./config.sh
 
-# Sanity check: Ensure paths are configured
+# Ensure paths are configured
 if [ ! -f "$simnibs_python_executable" ]; then
     echo "[ERROR] SimNIBS executable not found. Please verify config.sh."
     exit 1
 fi
 
 # --- ARGUMENT PARSING & CUSTOMIZATION ---
-# Uses command-line arguments if provided, otherwise falls back to defaults.
+# Position coordinate
 subject_id=${1:-"standard_cbi_mni"}
 position_x=${2:-30}
 position_y=${3:--115.71}
 position_z=${4:--40.03}
 
-# Static parameters
-scaling_factor=70  
+# Direction coordinate
 direction_x=30
 direction_y=-115.71
 direction_z=0     
+
+# Scaling factor
+scaling_factor=70  
 
 project_directory="."
 head_mesh="./input/m2m_MNI152/MNI152.msh"
@@ -41,7 +33,7 @@ coil_file="/home/kszeilinga/software/simnibs/simnibs_env/lib/python3.11/site-pac
 
 echo "[INFO] Initiating pipeline for subject: $subject_id"
 
-# 1. Pre-flight cleanup to prevent SimNIBS internal conflicts
+# 1. Cleanup to prevent SimNIBS internal conflicts
 target_output_dir="$project_directory/output/simnibs/$subject_id"
 if [ -d "$target_output_dir" ]; then
     echo "[INFO] Existing output found for $subject_id. Purging to ensure clean run."
