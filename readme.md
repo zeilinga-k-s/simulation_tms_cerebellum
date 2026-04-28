@@ -1,6 +1,6 @@
 # TMS Simulation and Cerebellar Mapping Pipeline
 
-An automated pipeline bridging **[SimNIBS](https://simnibs.github.io/simnibs/build/html/index.html)** (a Finite Element Method solver) and **[SUITPy](https://github.com/diedrichsenlab/suitpy)** (a cerebellar mapping toolbox) to simulate Transcranial Magnetic Stimulation (TMS) electric fields and project them onto high-resolution 2D cerebellar flatmaps.
+An automated pipeline bridging **[SimNIBS](https://simnibs.github.io/simnibs/build/html/index.html)** and **[SUITPy](https://github.com/diedrichsenlab/suitpy)** to simulate Transcranial Magnetic Stimulation (TMS) electric fields and project them onto high-resolution 2D cerebellar flatmaps.
 
 ---
 
@@ -62,8 +62,7 @@ Create an `input/` directory at the project root and stage the following templat
 2. **The Coil Model:** Copy the target coil directory (e.g., `Drakaki_BrainStim_2022/`, found locally in `simnibs_env/lib/python3.X/site-packages/simnibs/resources/coil_models/`) into `input/`.
 
 ### Step 4.4: Configure Software Paths
-Open `config.sh` and update the paths to point to your local SimNIBS and SUITPy Python executables.
-    Example config.sh
+Open `config.sh` and update the paths to point to your local SimNIBS and SUITPy Python executables. For example:
 
     simnibs_python_executable="/path/to/your/SimNIBS-4.6/simnibs_env/bin/python3
 
@@ -74,6 +73,7 @@ Open `config.sh` and update the paths to point to your local SimNIBS and SUITPy 
 ## 5. Execution
 
 Execute the orchestrator script from your terminal:
+
     bash run_pipeline.sh
 
 **Workflow:**
