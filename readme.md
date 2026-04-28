@@ -58,7 +58,7 @@ This pipeline requires two isolated Python environments to prevent dependency co
 
 ### Step 4.3: Populate the Input Data
 Create an `input/` directory at the project root and stage the following templates:
-1. **The Head Mesh:** Download the `m2m_MNI152` template from the **[SimNIBS Example Datasets](https://simnibs.github.io/simnibs/build/html/tutorial/example_dataset.html)**. Copy the folder into `input/`.
+1. **The Head Mesh:** Download the `m2m_MNI152` template from the **[SimNIBS Example Datasets](https://simnibs.github.io/simnibs/build/html/dataset.html)**. Copy the folder into `input/`.
 2. **The Coil Model:** Copy the target coil directory (e.g., `Drakaki_BrainStim_2022/`, found locally in `simnibs_env/lib/python3.X/site-packages/simnibs/resources/coil_models/`) into `input/`.
 
 ### Step 4.4: Configure Software Paths
