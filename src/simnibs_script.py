@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import shutil
 import argparse
@@ -6,18 +7,19 @@ from simnibs import sim_struct, run_simnibs
 
 def run_physics_simulation(arguments):
     """
-    Sets up the 3D environment, places the coil, and runs the FEM solver.
+    Initializes and executes the SimNIBS Finite Element Method (FEM) solver.
+    
+    Parameters are mapped to the subject's local coordinate space. 
+    Surface mapping (map_to_surf) is disabled to optimize runtime, 
+    as downstream SUITPy processing relies strictly on the volumetric output.
     """
     session = sim_struct.SESSION()
     session.subid = arguments.subject_id
-    
     session.pathrun = os.path.abspath(arguments.project_directory)
     session.fnamehead = os.path.abspath(arguments.head_mesh)
 
-    # Update: Now saves inside the 'output' parent directory
     output_directory = os.path.join(session.pathrun, 'output', 'simnibs', session.subid)
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory, exist_ok=True)
+    os.makedirs(output_directory, exist_ok=True)
     session.pathfem = output_directory
 
     tms_coil_list = session.add_tmslist()
@@ -28,19 +30,19 @@ def run_physics_simulation(arguments):
     pos_obj.pos_ydir = [arguments.direction_x, arguments.direction_y, arguments.direction_z]      
     tms_coil_list.pos.append(pos_obj)
 
-    # --- SIMNIBS PHYSICS SETTINGS ---
+    # Physics module configurations
     session.open_in_gmsh = True   
     session.map_to_vol = True     
     session.map_to_surf = False   
     session.fields = 'e'          
 
-    print(f"--- LAUNCHING SIMNIBS ENGINE FOR: {arguments.subject_id} ---")
     run_simnibs(session)
     return session.pathfem
 
 def standardise_output_names(output_directory):
     """
-    Finds the Electric Field magnitude file and renames it.
+    Isolates the magnE NIfTI volume from the SimNIBS output array and 
+    standardizes the nomenclature for downstream processing.
     """
     volume_directory = os.path.join(output_directory, "subject_volumes")
     search_pattern = os.path.join(volume_directory, "*magnE.nii.gz")
@@ -50,9 +52,9 @@ def standardise_output_names(output_directory):
         original_file = found_files[0]
         standard_file = os.path.join(volume_directory, "simulation_output.nii.gz")
         shutil.move(original_file, standard_file)
-        print(f"--- OUTPUT STANDARDISED TO: {standard_file} ---")
     else:
-        print("--- ERROR: NO MAGNE NIFTI VOLUME FOUND ---")
+        print("[ERROR] SimNIBS failed to generate a valid magnE NIfTI volume.", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -1,49 +1,55 @@
 #!/bin/bash
 set -euo pipefail
+
 # =============================================================================
-# TMS SIMULATION & CEREBELLAR MAPPING PIPELINE
+# TMS Simulation & Cerebellar Mapping Orchestrator
+# 
+# Usage:
+#   bash run_pipeline.sh [SUBJECT_ID] [POS_X] [POS_Y] [POS_Z]
+# 
+# Example:
+#   bash run_pipeline.sh "patient_01" 30 -115.71 -40.03
 # =============================================================================
 
-# --- 1. LOAD CONFIGURATION ---
+# Load environment configuration
 . ./config.sh
 
-# --- 2. FILE PATHS (Relative) ---
-project_directory="."
-head_mesh="./input/m2m_MNI152/MNI152.msh"
-coil_file="/home/kszeilinga/software/simnibs/simnibs_env/lib/python3.11/site-packages/simnibs/resources/coil_models/Drakaki_BrainStim_2022/MagStim_DCC.ccd"
+# Sanity check: Ensure paths are configured
+if [ ! -f "$simnibs_python_executable" ]; then
+    echo "[ERROR] SimNIBS executable not found. Please verify config.sh."
+    exit 1
+fi
 
-# --- 3. SIMULATION SETTINGS ---
-subject_id="standard_cbi_mni"
+# --- ARGUMENT PARSING & CUSTOMIZATION ---
+# Uses command-line arguments if provided, otherwise falls back to defaults.
+subject_id=${1:-"standard_cbi_mni"}
+position_x=${2:-30}
+position_y=${3:--115.71}
+position_z=${4:--40.03}
+
+# Static parameters
 scaling_factor=70  
-
-# --- 4. COIL POSITION & DIRECTION ---
-position_x=30
-position_y=-115.71
-position_z=-40.03
-
 direction_x=30
 direction_y=-115.71
 direction_z=0     
 
-# =============================================================================
-# EXECUTION LOGIC 
-# =============================================================================
+project_directory="."
+head_mesh="./input/m2m_MNI152/MNI152.msh"
+coil_file="/home/kszeilinga/software/simnibs/simnibs_env/lib/python3.11/site-packages/simnibs/resources/coil_models/Drakaki_BrainStim_2022/MagStim_DCC.ccd"
 
-echo "========================================"
-echo " STEP 0: PRE-FLIGHT CHECKS              "
-echo "========================================"
-# Update: Now points inside the 'output' parent directory
+# --- EXECUTION LOGIC ---
+
+echo "[INFO] Initiating pipeline for subject: $subject_id"
+
+# 1. Pre-flight cleanup to prevent SimNIBS internal conflicts
 target_output_dir="$project_directory/output/simnibs/$subject_id"
 if [ -d "$target_output_dir" ]; then
-    echo "Notice: Previous simulation found for $subject_id. Clearing old files..."
+    echo "[INFO] Existing output found for $subject_id. Purging to ensure clean run."
     rm -rf "$target_output_dir"
 fi
-echo "Environment clear. Proceeding."
 
-echo "========================================"
-echo " STEP 1: EXECUTING PHYSICS SOLVER       "
-echo "========================================"
-
+# 2. FEM Calculation (SimNIBS)
+echo "[INFO] Launching SimNIBS physics solver..."
 "$simnibs_python_executable" src/simnibs_script.py \
     --project_directory "$project_directory" \
     --head_mesh "$head_mesh" \
@@ -56,24 +62,12 @@ echo "========================================"
     --direction_y "$direction_y" \
     --direction_z "$direction_z"
 
-if [ $? -ne 0 ]; then
-    echo "ERROR: SimNIBS simulation failed. Exiting pipeline."
-    exit 1
-fi
-
-echo "========================================"
-echo " STEP 2: EXECUTING VISUALISATION        "
-echo "========================================"
-
-# We no longer source activate. We just use the direct python executable.
+# 3. Projection & Visualization (SUITPy)
+echo "[INFO] Launching SUITPy visualization module..."
 "$suitpy_python_executable" src/suitpy_script.py \
     --project_directory "$project_directory" \
     --subject_id "$subject_id" \
     --scaling_factor "$scaling_factor"
 
-echo "========================================"
-echo " PIPELINE COMPLETE. OPENING FLATMAP.    "
-echo "========================================"
-
-# Update: Now opens the image from the 'output' parent directory
+echo "[INFO] Pipeline complete. Opening flatmap."
 xdg-open "$project_directory/output/suitpy/${subject_id}_cerebellar_flatmap.png" &
