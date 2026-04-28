@@ -63,9 +63,11 @@ Create an `input/` directory at the project root and stage the following templat
 
 ### Step 4.4: Configure Software Paths
 Open `config.sh` and update the paths to point to your local SimNIBS and SUITPy Python executables.
-    # Example config.sh
-    simnibs_python_executable="/path/to/your/SimNIBS-4.6/simnibs_env/bin/python3"
-    suitpy_python_executable="/path/to/your/simulation_tms_cerebellum/venv/bin/python"
+    Example config.sh
+
+    simnibs_python_executable="/path/to/your/SimNIBS-4.6/simnibs_env/bin/python3
+
+    suitpy_python_executable="/path/to/your/simulation_tms_cerebellum/venv/bin/python
 
 ---
 
@@ -75,7 +77,7 @@ Execute the orchestrator script from your terminal:
     bash run_pipeline.sh
 
 **Workflow:**
-1. **Pre-flight:** Safely clears previous `output/` files for the specified subject.
+1. **Clean-up:** Safely clears previous `output/` files for the specified subject.
 2. **Solver:** Executes `simnibs_script.py` to calculate spatial E-field magnitude.
 3. **Standardization:** Isolates the correct `.nii.gz` volume from the output array.
 4. **Visualization:** Executes `suitpy_script.py`, scales the field, and flattens the 3D data.
@@ -95,8 +97,3 @@ Execute the orchestrator script from your terminal:
 Optimized natively for **Linux**. 
 * **macOS:** Operates natively via the terminal (ensure `config.sh` paths reflect macOS application structures like `/Applications/SimNIBS-4.6/...`).
 * **Windows:** Requires the **Windows Subsystem for Linux (WSL 2)**. Install SimNIBS and Python within the Ubuntu subsystem to run.
-
----
-
-## 8. License
-Licensed under the [MIT License](LICENSE) - see the LICENSE file for details.

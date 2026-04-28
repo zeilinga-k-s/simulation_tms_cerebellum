@@ -27,7 +27,7 @@ scaling_factor=70
 
 project_directory="."
 head_mesh="./input/m2m_MNI152/MNI152.msh"
-coil_file="/home/kszeilinga/software/simnibs/simnibs_env/lib/python3.11/site-packages/simnibs/resources/coil_models/Drakaki_BrainStim_2022/MagStim_DCC.ccd"
+coil_file="./input/Drakaki_BrainStim_2022/MagStim_DCC.ccd"
 
 # --- EXECUTION LOGIC ---
 
